@@ -124,7 +124,7 @@ def render_admin(settings: Settings, db: Db) -> str:
                    "FROM usage WHERE day=date('now')") or {"m": 0, "u": 0, "t": 0}
     fb = db.one("SELECT COALESCE(SUM(helpful),0) up, COUNT(*) n FROM feedback") or {"up": 0, "n": 0}
     handoffs = db.all("SELECT * FROM handoffs ORDER BY id DESC LIMIT 8")
-    log_rows = db.all("SELECT chat_id, role, content, created_at FROM messages ORDER BY id DESC LIMIT 30")
+    log_rows = db.all("SELECT chat_id, role, content, created_at FROM messages WHERE role != 'system' ORDER BY id DESC LIMIT 30")
     pct = min(100, round(spend / settings.global_daily_budget_usd * 100)) if settings.global_daily_budget_usd else 0
     satisfaction = f"{round(fb['up'] / fb['n'] * 100)}%" if fb["n"] else "no votes yet"
 

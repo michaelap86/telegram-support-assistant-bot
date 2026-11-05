@@ -92,7 +92,7 @@ class KnowledgeBase:
                     self.db.run("UPDATE kb_chunks SET embedding=? WHERE id=?", (json.dumps(vec), c["id"]))
         return len(chunks)
 
-    async def search(self, query: str, k: int = 3) -> list[dict]:
+    async def search(self, query: str, k: int = 3, strict: bool = True) -> list[dict]:
         rows = self.db.all("SELECT id, source, title, body, embedding FROM kb_chunks")
         if not rows:
             return []
@@ -109,10 +109,12 @@ class KnowledgeBase:
         scored.sort(key=lambda s: s[0], reverse=True)
         # Cosine scores of unrelated text sit around 0.1-0.2, keyword scores need a real overlap
         floor = 0.28 if semantic else 0.5
+        # strict=False keeps the best matches even below the floor: the model can judge relevance
+        # itself, which matters for questions in other languages where similarity scores run lower.
         return [
-            {"title": r["title"], "source": r["source"], "body": r["body"], "score": round(s, 3)}
+            {"title": r["title"], "source": r["source"], "body": r["body"], "score": round(s, 3), "relevant": s >= floor}
             for s, r in scored[:k]
-            if s >= floor
+            if s > 0 and (s >= floor or not strict)
         ]
 
     @staticmethod

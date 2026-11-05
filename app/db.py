@@ -84,7 +84,7 @@ class Db:
     def history(self, chat_id: int, turns: int) -> list[dict]:
         rows = self.all(
             "SELECT role, content FROM messages WHERE chat_id=? ORDER BY id DESC LIMIT ?",
-            (chat_id, turns * 2),
+            (chat_id, turns * 3),
         )
         return list(reversed(rows))
 

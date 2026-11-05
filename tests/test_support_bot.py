@@ -191,3 +191,18 @@ async def test_model_failure_falls_back_to_the_help_articles(make_agent):
     agent, _ = await make_agent(Broken([]))
     out = await agent.answer(1, "Ana", "how long is the warranty?")
     assert "2 year warranty" in out.text and "unavailable" in out.text
+
+
+async def test_lookup_results_stay_available_for_follow_up_questions(make_agent):
+    llm = ScriptedLLM(
+        [
+            Reply(tool_calls=[ToolCall("c1", "check_order", {"order_id": "NG-10001", "email": "alex@example.com"})]),
+            say("It shipped with DHL."),
+            say("It should arrive on the estimated date."),
+        ]
+    )
+    agent, _ = await make_agent(llm)
+    await agent.answer(1, "Alex", "where is NG-10001? alex@example.com")
+    await agent.answer(1, "Alex", "when will it arrive?")
+    follow_up = llm.calls[2]["messages"]
+    assert any(m["role"] == "system" and "JD0146200815" in m["content"] for m in follow_up[1:])
