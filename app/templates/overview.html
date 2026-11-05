@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Overview{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Overview</h1><p class="sub">How the assistant is doing today, and over the last 14 days.</p></div>
+  <span class="live"><i></i>Live</span>
+</div>
+
+<div class="grid k4">
+  <div class="card kpi">{{ sparks.m }}
+    <div class="lab"><span class="ic">{{ icon('chat') }}</span>Messages today</div>
+    <div class="val">{{ kpi.messages }}</div><div class="note">{{ '{:,}'.format(kpi.msgs_14) }} in 14 days</div>
+  </div>
+  <div class="card kpi">{{ sparks.p }}
+    <div class="lab"><span class="ic">{{ icon('users') }}</span>People today</div>
+    <div class="val">{{ kpi.people }}</div><div class="note">{{ '{:,}'.format(kpi.tokens_today) }} tokens used</div>
+  </div>
+  <div class="card kpi">
+    <div class="lab"><span class="ic">{{ icon('dollar') }}</span>Spend today</div>
+    <div class="val">${{ '%.4f'|format(kpi.spend) }}</div>
+    <div class="track-bar {{ 'warn' if kpi.budget_pct > 80 }}"><i style="width:{{ kpi.budget_pct }}%"></i></div>
+    <div class="note">{{ kpi.budget_pct }}% of the ${{ '%.2f'|format(kpi.budget) }} daily cap</div>
+  </div>
+  <div class="card kpi">{{ donut }}
+    <div class="lab"><span class="ic">{{ icon('thumb') }}</span>Helpful answers</div>
+    <div class="val">{{ kpi.helpful }}%</div><div class="note">{{ kpi.votes }} votes from customers</div>
+  </div>
+</div>
+
+<div class="grid c21 mt">
+  <div class="card">
+    <div class="card-h"><h2>Messages per day</h2><small>Last 14 days</small></div>
+    {{ chart_msgs }}
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>Cost controls</h2><small>Hard limits</small></div>
+    <div class="limits">
+      <div><span>Language model</span><b>{% if limits.ai_on %}<span class="on-dot">●</span> {{ limits.model }}{% else %}<span class="off-dot">●</span> articles only{% endif %}</b></div>
+      <div><span>Daily budget, all users</span><b>${{ '%.2f'|format(kpi.budget) }}</b></div>
+      <div><span>Messages per person per day</span><b>{{ limits.user_daily_limit }}</b></div>
+      <div><span>Reply length</span><b>{{ limits.max_output_tokens }} tokens</b></div>
+      <div><span>Conversation memory</span><b>{{ limits.history_turns }} exchanges</b></div>
+      <div><span>Search</span><b>{{ limits.embed_model }}</b></div>
+      <div><span>Average cost per message</span><b>${{ '%.5f'|format(kpi.avg_cost) }}</b></div>
+      <div><span>When the cap is reached</span><b>Answers from articles</b></div>
+    </div>
+  </div>
+</div>
+
+<div class="grid c2 mt">
+  <div class="card">
+    <div class="card-h"><h2>Daily spend</h2><small>${{ '%.2f'|format(kpi.month_cost) }} in 14 days</small></div>
+    {{ chart_cost }}
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>Tokens per day</h2><small>Thousands</small></div>
+    {{ chart_tokens }}
+  </div>
+</div>
+
+<div class="grid c2 mt">
+  <div class="card">
+    <div class="card-h"><h2>Latest conversations</h2><a class="pill sample" href="/admin/conversations">View all</a></div>
+    <div class="list">
+      {% for c in convs %}
+      <a class="item" href="/admin/conversations?chat={{ c.chat_id }}">
+        <span class="avatar">{{ c.name[0] }}</span>
+        <span class="txt"><b>{{ c.name }}{% if c.handoff %} <span class="pill ho">human</span>{% endif %}</b><span>{{ c.preview }}</span></span>
+        <time>{{ c.last|ago }}</time>
+      </a>
+      {% else %}<div class="empty">No conversations yet.</div>{% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-h"><h2>Human handoffs</h2><a class="pill {{ 'open' if open_handoffs else 'sample' }}" href="/admin/handoffs">{{ open_handoffs }} open</a></div>
+    <div class="list">
+      {% for h in handoffs %}
+      <div class="item">
+        <span class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">{{ (h.name or '?')[0] }}</span>
+        <span class="txt"><b>{{ h.name or 'Customer' }}</b><span>{{ h.summary }}</span></span>
+        <span><span class="pill {{ h.status }}">{{ h.status }}</span><br><time>{{ h.created_at|ago }}</time></span>
+      </div>
+      {% else %}<div class="empty">No handoffs yet.</div>{% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

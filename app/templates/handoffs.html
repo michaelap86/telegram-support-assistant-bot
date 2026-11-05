@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Human handoffs{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Human handoffs</h1><p class="sub">Conversations the assistant passed to a person. Agents answer by replying in Telegram.</p></div>
+  <span class="pill {{ 'open' if open_count else 'sample' }}">{{ open_count }} open</span>
+</div>
+<div class="card">
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Customer</th><th>What they need</th><th>Status</th><th>Opened</th><th></th></tr></thead>
+      <tbody>
+      {% for h in items %}
+        <tr>
+          <td><div class="row" style="align-items:center"><span class="avatar" style="background:linear-gradient(135deg,#f59e0b,#ef4444)">{{ (h.name or '?')[0] }}</span><b>{{ h.name or 'Customer' }}</b></div></td>
+          <td>{{ h.summary }}</td>
+          <td><span class="pill {{ h.status }}">{{ h.status }}</span></td>
+          <td class="mute" style="white-space:nowrap">{{ h.created_at|ago }}</td>
+          <td><a class="btn" href="/admin/conversations?chat={{ h.chat_id }}">{{ icon('chat') }}<span class="t">Open chat</span></a></td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5" class="empty">No handoffs yet.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<p class="sub" style="margin-top:14px">A handoff nobody answers is released after two hours and the assistant takes over again.</p>
+{% endblock %}

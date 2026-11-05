@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Conversations{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Conversations</h1><p class="sub">Every chat with the assistant, newest first.</p></div>
+</div>
+<div class="chat">
+  <div class="card">
+    <div class="chat-list">
+      {% for c in convs %}
+      <a class="item {{ 'on' if current and c.chat_id == current.chat_id }}" href="/admin/conversations?chat={{ c.chat_id }}">
+        <span class="avatar">{{ c.name[0] }}</span>
+        <span class="txt"><b>{{ c.name }}{% if c.handoff %} <span class="pill ho">human</span>{% endif %}</b><span>{{ c.preview }}</span></span>
+        <time>{{ c.last|ago }}</time>
+      </a>
+      {% else %}<div class="empty">No conversations yet.</div>{% endfor %}
+    </div>
+  </div>
+  <div class="card">
+    {% if current %}
+    <div class="thread-h">
+      <span class="avatar">{{ current.name[0] }}</span>
+      <div><b>{{ current.name }}</b><div class="mute" style="font-size:12.5px">{{ current.n }} messages · {{ current.last|ago }}{% if current.sample %} · <span class="pill sample">sample</span>{% endif %}</div></div>
+    </div>
+    <div class="thread">
+      {% for m in messages %}
+      <div class="msg {{ m.who }}">
+        <div class="b">{{ m.text }}</div>
+        <small>{{ {'customer': 'Customer', 'bot': 'Assistant', 'agent': 'Support agent'}[m.who] }} · {{ m.at }}</small>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}<div class="empty">Pick a conversation.</div>{% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,41 @@
+{% from "_icons.html" import icon %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sign in · {{ shop }} support</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236c7bff'/%3E%3Ctext x='16' y='22' font-size='19' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'%3EN%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>{% include "_style.html" %}</style>
+</head>
+<body>
+<div class="login-wrap">
+  <form class="login" method="post" action="/admin/login" autocomplete="on">
+    <div class="brand"><span class="logo">N</span><span><b>{{ shop }}</b><small>Support assistant</small></span></div>
+    <h1>Welcome back</h1>
+    <p>Sign in to see conversations, spending and handoffs.</p>
+    {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+    <label for="u">Username</label>
+    <input id="u" name="username" autocomplete="username" required autofocus>
+    <label for="p">Password</label>
+    <input id="p" name="password" type="password" autocomplete="current-password" required>
+    <button class="btn primary" type="submit">Sign in</button>
+    {% if demo_user %}
+    <div class="hint">
+      <b>Just looking around?</b> Use the read-only demo account:<br>
+      username <code>{{ demo_user }}</code> · password <code>{{ demo_password }}</code>
+      <button class="btn" type="button" id="fill">{{ icon('zap') }}Fill in the demo login</button>
+    </div>
+    <script>
+    document.getElementById('fill').addEventListener('click',function(){
+      document.getElementById('u').value={{ demo_user|tojson }};document.getElementById('p').value={{ demo_password|tojson }};
+      document.querySelector('form').requestSubmit();
+    });
+    </script>
+    {% endif %}
+  </form>
+</div>
+</body>
+</html>

@@ -112,7 +112,7 @@ class KnowledgeBase:
         # strict=False keeps the best matches even below the floor: the model can judge relevance
         # itself, which matters for questions in other languages where similarity scores run lower.
         return [
-            {"title": r["title"], "source": r["source"], "body": r["body"], "score": round(s, 3), "relevant": s >= floor}
+            {"title": r["title"], "source": r["source"], "body": r["body"], "score": round(s, 3), "semantic": semantic, "relevant": s >= floor}
             for s, r in scored[:k]
             if s > 0 and (s >= floor or not strict)
         ]

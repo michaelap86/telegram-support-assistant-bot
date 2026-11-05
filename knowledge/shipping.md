@@ -1,7 +1,7 @@
 # Shipping
 
 ## Delivery times and costs
-Nova Gear ships from a warehouse in Rotterdam. Standard shipping takes 3 to 5 business days within the EU and costs 4.90 EUR. Express shipping takes 1 to 2 business days and costs 9.90 EUR. Orders over 60 EUR ship free with standard delivery.
+Nova Gear ships from a warehouse in Rotterdam. We deliver to all 27 EU countries, for example Germany, Austria, France, Spain, Italy and the Netherlands. Standard shipping takes 3 to 5 business days within the EU and costs 4.90 EUR. Express shipping takes 1 to 2 business days and costs 9.90 EUR. Orders over 60 EUR ship free with standard delivery.
 
 ## International shipping
 We ship to the UK, Switzerland, Norway, the USA and Canada. International delivery takes 5 to 10 business days. Customs duties and import taxes are paid by the customer and are not included in the order total.

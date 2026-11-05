@@ -11,6 +11,8 @@ from .tools import SCHEMAS, Tools
 
 log = logging.getLogger("support-bot")
 
+SOURCE_MIN_SCORE = 0.45
+
 SYSTEM = """You are the support assistant of {shop}, an online shop for audio gear, wearables and power accessories.
 
 Rules:
@@ -56,7 +58,8 @@ class Agent:
 
         candidates = await self.kb.search(text, k=3, strict=False)
         excerpts = [e for e in candidates if e["relevant"]]
-        sources = [e["title"] for e in excerpts[:2]]
+        # Only cite an article when the match is strong; weak matches are noise under an answer
+        sources = [e["title"] for e in excerpts if not e["semantic"] or e["score"] >= SOURCE_MIN_SCORE][:2]
 
         over_budget = self.s.global_daily_budget_usd and self.db.spend_today() >= self.s.global_daily_budget_usd
         if not self.llm.available or over_budget:

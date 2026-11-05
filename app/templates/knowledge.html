@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% from "_icons.html" import icon %}
+{% block title %}Knowledge base{% endblock %}
+{% block content %}
+<div class="head">
+  <div><h1>Knowledge base</h1><p class="sub">The help articles the assistant answers from. Edit the Markdown files and restart: only changed sections are re-indexed.</p></div>
+  <span class="pill {{ 'closed' if embedded == total else 'open' }}">{{ embedded }} of {{ total }} sections indexed</span>
+</div>
+{% for source, rows in groups.items() %}
+  <div class="src">{{ icon('book') }}{{ source }} <small>{{ rows|length }} sections</small></div>
+  <div class="kb-grid">
+    {% for r in rows %}
+    <div class="kb">
+      <b>{{ r.title }}</b>
+      <p>{{ r.body }}</p>
+      <div class="meta"><span>{{ r.body|length }} characters</span><span>{{ 'Semantic search ✓' if r.emb else 'Keyword search' }}</span></div>
+    </div>
+    {% endfor %}
+  </div>
+{% else %}<div class="card empty">No articles loaded.</div>{% endfor %}
+{% endblock %}

@@ -170,17 +170,86 @@ async def test_without_a_model_the_bot_answers_from_the_knowledge_base(make_agen
 
 
 # ----------------------------------------------------------------------- web
-def test_admin_requires_a_password_and_webhook_requires_the_secret(settings):
+def _login(client, user, password):
+    return client.post("/admin/login", data={"username": user, "password": password}, follow_redirects=False)
+
+
+def test_webhook_requires_the_secret_and_health_is_open(settings):
     with TestClient(create_app(settings)) as client:
         assert client.get("/health").json() == {"ok": True}
-        assert client.get("/admin").status_code == 401
-        assert client.get("/admin", auth=("admin", "wrong")).status_code == 401
-        page = client.get("/admin", auth=("admin", "pw"))
-        assert page.status_code == 200 and "Spend today" in page.text
-
         assert client.post("/telegram/webhook", json={}).status_code == 403
         right = {"X-Telegram-Bot-Api-Secret-Token": settings.webhook_secret}
         assert client.post("/telegram/webhook", json={}, headers=right).status_code == 503  # no bot token in tests
+
+
+def test_dashboard_needs_a_login_page_not_a_browser_popup(settings):
+    with TestClient(create_app(settings)) as client:
+        for path in ("/admin", "/admin/conversations", "/admin/handoffs", "/admin/knowledge"):
+            r = client.get(path, follow_redirects=False)
+            assert r.status_code == 303 and r.headers["location"] == "/admin/login"
+            assert "www-authenticate" not in r.headers
+        page = client.get("/admin/login")
+        assert page.status_code == 200 and "Sign in" in page.text and "demo1234" in page.text
+
+        bad = _login(client, "admin", "wrong")
+        assert bad.status_code == 401 and "do not match" in bad.text
+
+
+def test_admin_sees_the_whole_dashboard(settings):
+    with TestClient(create_app(settings)) as client:
+        ok = _login(client, "admin", "pw")
+        assert ok.status_code == 303 and "support_session" in ok.headers["set-cookie"]
+        assert "HttpOnly" in ok.headers["set-cookie"]
+        home = client.get("/admin")
+        assert home.status_code == 200 and "Spend today" in home.text and "Administrator" in home.text
+        assert "Demo viewer" not in home.text
+        assert "Maya R." in client.get("/admin/conversations").text
+        assert "Sofía M." in client.get("/admin/handoffs").text
+        assert "Refund timing" in client.get("/admin/knowledge").text
+
+
+def test_demo_login_is_read_only_and_never_shows_real_visitors(settings):
+    with TestClient(create_app(settings)) as client:
+        db = client.app.state.s["db"]
+        db.add_message(555123, "user", "my secret order question 4711")
+        db.add_message(555123, "assistant", "private answer")
+
+        assert _login(client, "demo", "demo1234").status_code == 303
+        assert "Demo viewer" in client.get("/admin").text
+        convs = client.get("/admin/conversations").text
+        assert "Maya R." in convs and "my secret order question" not in convs
+        stolen = client.get("/admin/conversations?chat=555123").text
+        assert "my secret order question" not in stolen and "private answer" not in stolen
+
+    with TestClient(create_app(settings)) as client:
+        client.app.state.s["db"].add_message(555123, "user", "my secret order question 4711")
+        _login(client, "admin", "pw")
+        assert "my secret order question" in client.get("/admin/conversations?chat=555123").text
+
+
+def test_a_forged_or_expired_session_is_rejected(settings):
+    from app.admin import make_token, read_token
+
+    token = make_token(settings, "admin")
+    assert read_token(settings, token) == "admin"
+    assert read_token(settings, token.replace("admin", "demo", 1)) is None  # role swapped, signature no longer matches
+    assert read_token(settings, token[:-3] + "abc") is None
+    assert read_token(settings, "admin.1.deadbeef") is None
+    assert read_token(settings, None) is None
+
+
+def test_repeated_wrong_passwords_lock_the_address_out(settings):
+    with TestClient(create_app(settings)) as client:
+        for _ in range(8):
+            assert _login(client, "admin", "nope").status_code == 401
+        assert _login(client, "admin", "pw").status_code == 429
+
+
+def test_logout_clears_the_session(settings):
+    with TestClient(create_app(settings)) as client:
+        _login(client, "admin", "pw")
+        assert client.post("/admin/logout", follow_redirects=False).status_code == 303
+        assert client.get("/admin", follow_redirects=False).status_code == 303
 
 
 async def test_model_failure_falls_back_to_the_help_articles(make_agent):

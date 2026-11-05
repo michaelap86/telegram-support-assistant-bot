@@ -26,10 +26,19 @@ class Settings(BaseSettings):
 
     admin_user: str = "admin"
     admin_password: str = "change-me"
+    # Read-only login for people looking at the demo; set empty to disable
+    demo_user: str = "demo"
+    demo_password: str = "demo1234"
 
     db_path: str = "data/bot.db"
     knowledge_dir: str = "knowledge"
     shop_name: str = "Nova Gear"
+
+    @property
+    def session_secret(self) -> str:
+        import hashlib
+
+        return hashlib.sha256(("session" + self.admin_password + self.telegram_token).encode()).hexdigest()
 
     @property
     def webhook_secret(self) -> str:

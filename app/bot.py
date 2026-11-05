@@ -148,7 +148,7 @@ def build_dispatcher(settings: Settings, db: Db, agent: Agent) -> Dispatcher:
     @router.message(Command("stats"), F.func(lambda m: is_admin(m.chat.id)))
     async def stats_cmd(message: Message):
         row = db.one("SELECT COALESCE(SUM(messages),0) m, COUNT(*) u FROM usage WHERE day=date('now')") or {}
-        open_n = db.one("SELECT COUNT(*) n FROM handoffs WHERE status='open'")["n"]
+        open_n = db.one("SELECT COUNT(*) n FROM handoffs WHERE status='open' AND chat_id > 0")["n"]
         await message.answer(
             f"Today: {row.get('m', 0)} messages from {row.get('u', 0)} people\n"
             f"Spend: ${db.spend_today():.4f} of ${settings.global_daily_budget_usd:.2f}\nOpen handoffs: {open_n}"

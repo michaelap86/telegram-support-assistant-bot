@@ -1,0 +1,46 @@
+{% from "_icons.html" import icon %}<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Overview{% endblock %} · {{ shop }} support</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%236c7bff'/%3E%3Ctext x='16' y='22' font-size='19' text-anchor='middle' fill='white' font-family='Arial' font-weight='700'%3EN%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<style>{% include "_style.html" %}</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <a class="brand" href="/admin"><span class="logo">N</span><span><b>{{ shop }}</b><small>Support assistant</small></span></a>
+    <nav>
+      <a href="/admin" class="{{ 'on' if nav == 'overview' }}">{{ icon('grid') }}Overview</a>
+      <a href="/admin/conversations" class="{{ 'on' if nav == 'conversations' }}">{{ icon('chat') }}Conversations</a>
+      <a href="/admin/handoffs" class="{{ 'on' if nav == 'handoffs' }}">{{ icon('person') }}Human handoffs</a>
+      <a href="/admin/knowledge" class="{{ 'on' if nav == 'knowledge' }}">{{ icon('book') }}Knowledge base</a>
+    </nav>
+    <div class="side-foot">
+      <div class="who"><span class="dot"></span><span>{{ role_label }}<small>{{ 'Full access' if role == 'admin' else 'Read-only' }}</small></span></div>
+      <div class="row">
+        {% if bot %}<a class="btn grow" href="https://t.me/{{ bot }}" target="_blank" rel="noopener">{{ icon('send') }}<span class="t">Open bot</span></a>{% endif %}
+        <button class="btn" id="theme" type="button" title="Switch theme" aria-label="Switch theme">{{ icon('sun') }}</button>
+      </div>
+      <form method="post" action="/admin/logout"><button class="btn" style="width:100%" type="submit">{{ icon('logout') }}<span class="t">Log out</span></button></form>
+    </div>
+  </aside>
+  <main>
+    {% if role == 'demo' %}
+    <div class="banner">{{ icon('shield') }}<div><b>Demo viewer.</b> You are looking at the live dashboard in read-only mode. Usage numbers are real; conversations and handoffs shown here are made-up samples, so no real visitor's messages are ever visible.</div></div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+</div>
+<script>
+document.getElementById('theme').addEventListener('click',function(){
+  var d=document.documentElement,cur=d.dataset.theme||(matchMedia('(prefers-color-scheme: light)').matches?'light':'dark'),n=cur==='dark'?'light':'dark';
+  d.dataset.theme=n;try{localStorage.setItem('theme',n)}catch(e){}
+});
+</script>
+</body>
+</html>
