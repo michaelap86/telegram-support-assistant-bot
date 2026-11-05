@@ -1,5 +1,6 @@
 """The conversation loop: guards, knowledge lookup, the model, its tools, and the spending bookkeeping."""
 import json
+import logging
 from dataclasses import dataclass, field
 
 from .config import Settings
@@ -7,6 +8,8 @@ from .db import Db
 from .kb import KnowledgeBase
 from .llm import LLM
 from .tools import SCHEMAS, Tools
+
+log = logging.getLogger("support-bot")
 
 SYSTEM = """You are the support assistant of {shop}, an online shop for audio gear, wearables and power accessories.
 
@@ -23,6 +26,7 @@ Policy excerpts (may be incomplete):
 
 LIMIT_USER = "You have reached today's message limit for this demo (the limit keeps the running costs at zero). Please come back tomorrow, or write to hello@novagear.example."
 LIMIT_BUDGET = "The demo has used up today's language-model budget. Basic answers from the knowledge base still work, and the budget resets tomorrow."
+LIMIT_MODEL = "(The AI part of the assistant is unavailable right now, so this answer comes straight from our help articles.)"
 HANDOFF_NOTE = "A human agent has been notified and will reply in this chat."
 
 
@@ -71,7 +75,16 @@ class Agent:
         ctx = {"chat_id": chat_id, "name": name, "events": []}
         total_cost, used_tools, reply_text = 0.0, False, ""
         for step in range(4):  # a few tool round-trips at most
-            reply = await self.llm.chat(messages, SCHEMAS, self.s.max_output_tokens)
+            try:
+                reply = await self.llm.chat(messages, SCHEMAS, self.s.max_output_tokens)
+            except Exception:  # quota, outage, timeout: degrade to the help articles instead of failing
+                log.exception("language model call failed")
+                if step:
+                    break
+                self.db.record_usage(chat_id, 0, 0, 0.0)
+                fallback = f"{self._from_knowledge_only(excerpts)}\n\n{LIMIT_MODEL}"
+                self.db.add_message(chat_id, "assistant", fallback)
+                return Answer(fallback, sources if excerpts else [])
             cost = self._cost(reply.prompt_tokens, reply.completion_tokens)
             total_cost += cost
             self.db.record_usage(chat_id, reply.prompt_tokens, reply.completion_tokens, cost, message=(step == 0))

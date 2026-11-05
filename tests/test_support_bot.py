@@ -181,3 +181,13 @@ def test_admin_requires_a_password_and_webhook_requires_the_secret(settings):
         assert client.post("/telegram/webhook", json={}).status_code == 403
         right = {"X-Telegram-Bot-Api-Secret-Token": settings.webhook_secret}
         assert client.post("/telegram/webhook", json={}, headers=right).status_code == 503  # no bot token in tests
+
+
+async def test_model_failure_falls_back_to_the_help_articles(make_agent):
+    class Broken(ScriptedLLM):
+        async def chat(self, messages, tools, max_tokens):
+            raise RuntimeError("429 no credits")
+
+    agent, _ = await make_agent(Broken([]))
+    out = await agent.answer(1, "Ana", "how long is the warranty?")
+    assert "2 year warranty" in out.text and "unavailable" in out.text
