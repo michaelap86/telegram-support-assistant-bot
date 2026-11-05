@@ -1,0 +1,5 @@
+aiogram>=3.31,<4
+fastapi>=0.162
+uvicorn[standard]>=0.54
+openai>=3.45
+pydantic-settings>=2.16
