@@ -4,7 +4,7 @@ A customer-support bot for an online shop, built with Python. It answers from a 
 
 The shop in the demo ("Nova Gear") and all its orders are made up.
 
-**Try it:** open the bot in Telegram, send `/start`, then ask for order `NG-10001` with the email `alex@example.com`.
+**Try it:** [@novagear_help_bot](https://t.me/novagear_help_bot) on Telegram (the app itself runs at `https://nova-assistant.150-230-43-127.sslip.io`). Send `/start`, then ask for order `NG-10001` with the email `alex@example.com`.
 
 ## What it does
 

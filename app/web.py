@@ -53,11 +53,10 @@ def create_app(settings: Settings | None = None, llm=None) -> FastAPI:
         db: Db = state["db"]
         if not db.one("SELECT 1 AS x FROM products LIMIT 1"):
             seed_demo(db)
-        count = await state["kb"].sync()
-        log.info("knowledge base ready: %s sections", count)
-
+        # Sections are stored at once; embeddings are computed in the background so a slow or failing
+        # model API can never keep the app from starting (search uses keywords until they are ready).
+        tasks = [asyncio.create_task(state["kb"].sync()), asyncio.create_task(daily_reset(db))]
         bot = None
-        tasks = [asyncio.create_task(daily_reset(db))]
         if settings.telegram_token:
             bot = Bot(settings.telegram_token, default=DefaultBotProperties())
             app.state.bot = bot
