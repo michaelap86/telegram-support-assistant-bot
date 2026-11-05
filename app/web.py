@@ -62,6 +62,14 @@ def create_app(settings: Settings | None = None, llm=None) -> FastAPI:
             bot = Bot(settings.telegram_token, default=DefaultBotProperties())
             app.state.bot = bot
             await bot.set_my_commands(COMMANDS)
+            try:  # the text people see on the bot's start screen
+                await bot.set_my_description(
+                    f"Support assistant for the demo shop {settings.shop_name}. Ask about orders, returns, shipping, "
+                    "warranty and products, in any language. Try order NG-10001 with alex@example.com. All shop data is made up."
+                )
+                await bot.set_my_short_description(f"Demo support assistant for {settings.shop_name}: orders, returns, shipping, warranty.")
+            except Exception:
+                log.exception("could not set the bot description")
             if settings.public_url:
                 await bot.set_webhook(
                     f"{settings.public_url.rstrip('/')}/telegram/webhook",
